@@ -42,6 +42,13 @@ jobs:
       - run: npm run typecheck
       - run: npm test -- --coverage
       - run: npm run build
+      - name: Demo against the synthetic shop database
+        env:
+          PGPASSWORD: mcp
+        run: |
+          psql -h localhost -U mcp -d mcp_test -c 'CREATE DATABASE shop'
+          psql -h localhost -U mcp -d shop -v ON_ERROR_STOP=1 -q -f examples/shop.sql
+          DATABASE_URL=postgresql://mcp_reader:mcp_reader@localhost:5432/shop node scripts/demo.mjs
 
   docker:
     name: Container image (build + MCP smoke test)
