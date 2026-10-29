@@ -25,7 +25,7 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.12"
   },
-  "description": "MCP server that gives AI assistants safe, read-only access to PostgreSQL",
+  "description": "MCP server that gives AI assistants read-only access to PostgreSQL: parser-checked SELECTs, read-only transactions, timeouts, row caps and query plans",
   "bin": {
     "pg-readonly-mcp": "dist/cli.js"
   },
@@ -39,6 +39,7 @@
     "lint": "oxlint src test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "demo": "npm run build && node scripts/demo.mjs"
   }
 }

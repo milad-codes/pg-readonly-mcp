@@ -1,0 +1,17 @@
+# Demo database with synthetic data: docker compose -f examples/docker-compose.yml up -d
+services:
+  shop-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: shop
+    ports:
+      - '5433:5432'
+    volumes:
+      - ./shop.sql:/docker-entrypoint-initdb.d/shop.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U demo -d shop']
+      interval: 2s
+      timeout: 2s
+      retries: 30

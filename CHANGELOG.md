@@ -4,6 +4,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- `npm run demo` with a synthetic shop database (`examples/`): an MCP client walkthrough that CI also runs
+
+### Changed
+
+- README rewritten around the problem, scope, layers and their trade-offs, setup, troubleshooting and limitations;
+  SECURITY.md states that the database role, not this server, is the security boundary; package description no longer
+  claims "safe" access
+
 ### Fixed
 
 - `describe_table` sent three queries to one client at once; node-postgres 8.23 warns about this and version 9 removes
