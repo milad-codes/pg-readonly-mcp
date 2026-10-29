@@ -53,6 +53,20 @@ describe('assertReadOnlySelect', () => {
     ["SELECT lo_import('/etc/passwd')", 'forbidden_function'],
     ["SELECT query_to_xml('DELETE FROM users RETURNING *', true, false, '')", 'forbidden_function'],
     ["SELECT table_to_xml('secret.users', true, false, '')", 'forbidden_function'],
+    ["SELECT * FROM ts_stat('SELECT to_tsvector(key) FROM secret.api_keys')", 'forbidden_function'],
+    ["SELECT pg_catalog.ts_stat('SELECT to_tsvector(key) FROM secret.api_keys')", 'forbidden_function'],
+    [
+      "SELECT ts_rewrite('a'::tsquery, 'SELECT to_tsquery(key), ''a''::tsquery FROM secret.api_keys')",
+      'forbidden_function',
+    ],
+    [
+      "SELECT * FROM crosstab('SELECT 1, 2, key FROM secret.api_keys') AS t(a int, b text)",
+      'forbidden_function',
+    ],
+    [
+      "SELECT * FROM public.connectby('secret.tree', 'id', 'parent', '1', 0) AS t(id text, parent text, level int)",
+      'forbidden_function',
+    ],
     ['SELECT admin.rotate_keys()', 'forbidden_function'],
     ['SELECT * FROM secret.api_keys', 'forbidden_relation'],
     ['SELECT * FROM information_schema.tables', 'forbidden_relation'],

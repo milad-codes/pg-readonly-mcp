@@ -63,6 +63,15 @@ describe.skipIf(!hasDatabase)('ReadOnlyExecutor (PostgreSQL)', () => {
     );
   });
 
+  it('refuses functions that would run SQL text against a schema that is not allowed', async () => {
+    // ts_stat executes its argument as a query; before the guard denied it, this returned the secret key's words
+    const error = await executor()
+      .query("SELECT word FROM ts_stat('SELECT to_tsvector(''simple'', key) FROM secret.api_keys')")
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(QueryRejectedError);
+    expect((error as QueryRejectedError).reason).toBe('forbidden_function');
+  });
+
   it('still refuses writes that bypass the parser (defence in depth)', async () => {
     const error = await inReadOnlyTransaction(
       pool,
