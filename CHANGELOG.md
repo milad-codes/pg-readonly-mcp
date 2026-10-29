@@ -4,6 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- `describe_table` sent three queries to one client at once; node-postgres 8.23 warns about this and version 9 removes
+  it. The catalog queries now run one after another
+
 ### Security
 
 - Functions that run SQL passed as text (`ts_stat`, `ts_rewrite`, `crosstab`, `connectby`) could read schemas outside

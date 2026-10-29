@@ -104,41 +104,51 @@ export class Catalog {
       if (!rel)
         throw new QueryFailedError(`Table "${table}" not found in schemas: ${schemas.join(', ')}.`, '42P01');
 
-      const [columns, constraints, indexes] = await Promise.all([
-        client.query<{
-          name: string;
-          type: string;
-          nullable: boolean;
-          default: string | null;
-          comment: string | null;
-        }>(
-          `SELECT a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type, NOT a.attnotnull AS nullable,
+      // One client runs one query at a time: node-postgres deprecates queueing on a busy client (removed in pg 9).
+      const columns = await client.query<{
+        name: string;
+        type: string;
+        nullable: boolean;
+        default: string | null;
+        comment: string | null;
+      }>(
+        `SELECT a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type, NOT a.attnotnull AS nullable,
                   pg_get_expr(d.adbin, d.adrelid) AS default, col_description(a.attrelid, a.attnum) AS comment
              FROM pg_catalog.pg_attribute a
              LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
             WHERE a.attrelid = $1 AND a.attnum > 0 AND NOT a.attisdropped
             ORDER BY a.attnum`,
-          [rel.oid],
-        ),
-        client.query<{ name: string; type: string; definition: string; columns: string[] }>(
-          `SELECT con.conname AS name, con.contype::text AS type, pg_get_constraintdef(con.oid) AS definition,
+        [rel.oid],
+      );
+      const constraints = await client.query<{
+        name: string;
+        type: string;
+        definition: string;
+        columns: string[];
+      }>(
+        `SELECT con.conname AS name, con.contype::text AS type, pg_get_constraintdef(con.oid) AS definition,
                   ARRAY(SELECT a.attname FROM unnest(con.conkey) WITH ORDINALITY k(attnum, ord)
                          JOIN pg_catalog.pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
                          ORDER BY k.ord)::text[] AS columns
              FROM pg_catalog.pg_constraint con
             WHERE con.conrelid = $1
             ORDER BY con.conname`,
-          [rel.oid],
-        ),
-        client.query<{ name: string; definition: string; unique: boolean; primary: boolean; size: string }>(
-          `SELECT ic.relname AS name, pg_get_indexdef(i.indexrelid) AS definition, i.indisunique AS unique,
+        [rel.oid],
+      );
+      const indexes = await client.query<{
+        name: string;
+        definition: string;
+        unique: boolean;
+        primary: boolean;
+        size: string;
+      }>(
+        `SELECT ic.relname AS name, pg_get_indexdef(i.indexrelid) AS definition, i.indisunique AS unique,
                   i.indisprimary AS primary, pg_size_pretty(pg_relation_size(i.indexrelid)) AS size
              FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid
             WHERE i.indrelid = $1
             ORDER BY ic.relname`,
-          [rel.oid],
-        ),
-      ]);
+        [rel.oid],
+      );
       const byType = (type: string) =>
         constraints.rows
           .filter((c) => c.type === type)

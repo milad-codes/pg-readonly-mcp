@@ -31,6 +31,30 @@ describe.skipIf(!hasDatabase)('Catalog (PostgreSQL)', () => {
     await expect(catalog.listTables('secret')).rejects.toThrow(/not readable here/);
   });
 
+  it('runs one query at a time on a client (node-postgres 9 drops queueing on a busy client)', async () => {
+    const connect = pool.connect.bind(pool);
+    let overlapping = 0;
+    const spy = vi.spyOn(pool, 'connect').mockImplementation((async () => {
+      const client = await connect();
+      const query = client.query.bind(client) as (...args: unknown[]) => Promise<unknown>;
+      let busy = 0;
+      (client as unknown as { query: (...args: unknown[]) => Promise<unknown> }).query = (...args) => {
+        if (busy > 0) overlapping += 1;
+        busy += 1;
+        return query(...args).finally(() => {
+          busy -= 1;
+        });
+      };
+      return client;
+    }) as typeof pool.connect);
+    try {
+      await catalog.describeTable('sales.orders');
+    } finally {
+      spy.mockRestore();
+    }
+    expect(overlapping).toBe(0);
+  });
+
   it('describes columns, keys, constraints and indexes', async () => {
     const orders = await catalog.describeTable('sales.orders');
     expect(orders.columns.map((c) => `${c.name}:${c.type}:${c.nullable}`)).toEqual([
