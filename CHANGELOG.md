@@ -2,6 +2,13 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Security
+
+- Functions that run SQL passed as text (`ts_stat`, `ts_rewrite`, `crosstab`, `connectby`) could read schemas outside
+  `PG_MCP_SCHEMAS`; the guard now rejects them like the `query_to_xml` family (#7)
+
 ## [0.1.0] — 2026-10-29
 
 ### Added

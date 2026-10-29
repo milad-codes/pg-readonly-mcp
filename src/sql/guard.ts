@@ -43,11 +43,22 @@ const SAFE_PG_FUNCTIONS = new Set([
   'pg_typeof',
 ]);
 
-/** Functions that act outside the transaction, read server files, change settings or run SQL passed as text. */
+/**
+ * Functions that act outside the transaction, change settings or run SQL passed as text. SQL inside a string is
+ * invisible to this guard, so it could read schemas that are not allowed: the query_to_xml family, ts_stat,
+ * ts_rewrite's query form and the tablefunc extension's crosstab/connectby all take a query as text.
+ */
 const DENIED_FUNCTIONS = new Set([
   'set_config',
   'nextval',
   'setval',
+  'ts_stat',
+  'ts_rewrite',
+  'crosstab',
+  'crosstab2',
+  'crosstab3',
+  'crosstab4',
+  'connectby',
   'query_to_xml',
   'query_to_xmlschema',
   'query_to_xml_and_xmlschema',
