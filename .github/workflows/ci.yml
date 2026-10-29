@@ -14,8 +14,22 @@ concurrency:
 
 jobs:
   checks:
-    name: Lint, typecheck, tests, build
+    name: Lint, typecheck, tests (PostgreSQL 16), build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: mcp
+          POSTGRES_PASSWORD: mcp
+          POSTGRES_DB: mcp_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mcp -d mcp_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      # integration tests are skipped when this is unset
+      DATABASE_URL: postgresql://mcp:mcp@localhost:5432/mcp_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
