@@ -31,8 +31,8 @@ jobs:
       # integration tests are skipped when this is unset
       DATABASE_URL: postgresql://mcp:mcp@localhost:5432/mcp_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -65,7 +65,7 @@ jobs:
           --health-cmd "pg_isready -U mcp -d mcp_test"
           --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: docker build -t pg-readonly-mcp:ci .
       - name: Speak MCP over stdio to the container
         run: |
